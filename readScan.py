@@ -35,7 +35,6 @@ class BLENode:
         self._led = Pin('LED', Pin.OUT)
         self.advertisement_data = []
         self.target_manufacturer_id = target_manufacturer_id
-        print(f"Initialized BLENode with target manufacturer ID: {self.target_manufacturer_id}")
 
     def _reset(self):
         self._name = None
@@ -52,7 +51,6 @@ class BLENode:
                     mfg_id = decoded_data[0]
                     if mfg_id == self.target_manufacturer_id:
                         self.advertisement_data.append((ubinascii.hexlify(addr).decode(),) + decoded_data)
-                        print(f"Added device with manufacturer ID: {mfg_id}")
             except Exception as e:
                 print(f"Error decoding advertisement data: {e}")
         elif event == _IRQ_SCAN_DONE:
@@ -71,12 +69,9 @@ class BLENode:
             type = adv_data[i + 1]
             value = bytes(adv_data[i + 2:i + length + 1])
             
-            print(f"Decoding field - Type: {type}, Value: {ubinascii.hexlify(value)}")
-            
             try:
                 if type == _ADV_TYPE_MANUFACTURER:
                     result['mfg'] = bluetooth.UUID(int.from_bytes(value[:2], 'little'))
-                    print(f"Manufacturer ID: {result['mfg']}")
                 elif type == _ADV_TYPE_NAME:
                     result['name'] = value.decode('utf-8', 'ignore')
                 elif type == _ADV_TYPE_INT:
