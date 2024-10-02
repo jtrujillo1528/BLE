@@ -65,11 +65,11 @@ async def read(ble, deviceType):
         output.append(accessedData.getMessageID())
     return output
 
-def broadcast(hopCount, distance, sender, messageID, ble):
+def broadcast(name, hopCount, distance, sender, messageID, ble):
     led = Pin('LED', Pin.OUT)
     led.value(True)
 
-    temp = bleBroadcast.BLEPing(ble, name=deviceName, hopCount=hopCount, mfg=_TELESCOPE_UUID, distance=distance, sender=sender, messageID=messageID)
+    temp = bleBroadcast.BLEPing(ble, name=name, hopCount=hopCount, mfg=_TELESCOPE_UUID, distance=distance, sender=sender, messageID=messageID)
     
     temp.blePing()
     time.sleep_ms(1)
@@ -81,7 +81,7 @@ async def main():
     while True:
         #messageIdentifier = random.randint(0000,9999)
         ble = bluetooth.BLE()
-        broadcast(hopCount=1, distance=7.94, sender=0x5678, messageID= 4321, ble=ble)
+        broadcast(name= deviceName, hopCount=1, distance=7.94, sender=0x5678, messageID= 4321, ble=ble)
         await asyncio.sleep(1)
         
 asyncio.run(main())

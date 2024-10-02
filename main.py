@@ -22,6 +22,9 @@ class Advertiser:
         self.name = data[5]
         self.messageID = data[6]
 
+    def getName(self):
+        return self.name
+
     def getHops(self):
         return self.hops
 
@@ -41,6 +44,7 @@ async def read(ble, deviceType):
     for data in scanData:
         accessedData = Advertiser(data)
         output.append({
+            'name': accessedData.getName(),
             'hops': accessedData.getHops(),
             'distance': accessedData.getDistance(),
             'sender': accessedData.getSender(),
@@ -48,14 +52,16 @@ async def read(ble, deviceType):
         })
     return output
 
-def broadcast(hopCount, distance, sender, messageID, ble):
+def respond(name, hopCount, distance, sender, messageID, ble):
     led = Pin('LED', Pin.OUT)
     led.value(True)
 
-    temp = bleBroadcast.BLEPing(ble, name=deviceName, hopCount=hopCount, mfg=_TELESCOPE_UUID, distance=distance, sender=sender, messageID=messageID)
-    
-    temp.blePing()
-    time.sleep_ms(1)
+    if hopCount > 0:
+
+        hopCount -= 1
+        message_forward = bleBroadcast.BLEPing(ble, name=name, hopCount=hopCount, mfg=_TELESCOPE_UUID, distance=distance, sender=sender, messageID=messageID)
+        message_forward.blePing()
+        time.sleep_ms(1)
         
     led.value(False)
 
@@ -64,12 +70,11 @@ async def main():
     while True:
         print('...')
         ble = bluetooth.BLE()
-        central = readScan.BLENode(ble, _TELESCOPE_UUID)
-        result = await read(ble, central)
-        print("Processed result:", result)
-        '''        if result:
+        node = readScan.BLENode(ble, _TELESCOPE_UUID)
+        result = await read(ble, node)
+        if result:
             for device in result:
-                broadcast(hopCount=device['hops'], distance=device['distance'], sender=device['sender'], messageID=device['messageID'], ble=ble)'''
+                respond(name=device['name'],hopCount=device['hops'], distance=device['distance'], sender=device['sender'], messageID=device['messageID'], ble=ble)
         await asyncio.sleep(0.05)
 
 asyncio.run(main())

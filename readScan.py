@@ -60,6 +60,7 @@ class BLENode:
                     self._scan_callback(self.advertisement_data)
                 else:
                     self._scan_callback(None)
+            self._scan_callback = None
 
     def _decode_adv_data(self, adv_data):
         i = 0
@@ -140,24 +141,34 @@ class Advertiser:
         return None
 
 def runScan(ble, central):
+    scan_complete = False
+    
     def on_scan(result):
+        nonlocal scan_complete
         if result:
             print("Scan complete. Found devices:")
             for device in result:
                 advertiser = Advertiser(device)
                 print(f"MAC: {advertiser.mac}")
                 print(f"MFG: {advertiser.mfg}")
-                print(f"Hops: {advertiser.getHops()}") 
+                print(f"Hops: {advertiser.getHops()}")
                 print(f"Distance: {advertiser.getDistance()}")
                 print(f"Sender: {advertiser.getSender()}")
                 print(f"Name: {advertiser.getName()}")
                 print(f"MessageID: {advertiser.getMessageID()}")
         else:
             print("No devices found.")
+        scan_complete = True
 
     central.scan(callback=on_scan)
-    while central._scan_callback is not None:
+    
+    # Wait for scan to complete or timeout after 10 seconds
+    start_time = time.ticks_ms()
+    while not scan_complete and time.ticks_diff(time.ticks_ms(), start_time) < 10000:
         time.sleep_ms(100)
+    
+    if not scan_complete:
+        print("Scan timed out")
     
     return central.advertisement_data
 
