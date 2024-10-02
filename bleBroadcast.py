@@ -51,14 +51,11 @@ _SENSOR_SERVICE = (
 
 class BLEPing:
     def __init__(self, ble, mfg=None, name=None, hopCount=0, distance=None, sender=None, messageID=0):
-        self._sensor_temp = machine.ADC(4)
         self._ble = ble
         self._ble.active(True)
         self._ble.irq(self._irq)
         ((self._handle,),) = self._ble.gatts_register_services((_AUTORANGING_SERVICE,))
         self._connections = set()
-        if name is None:
-            name = 'pico'
         self._payload = advertising_payload(
             services=[_AUTORANGING_UUID],
             name=name,
@@ -91,21 +88,17 @@ class BLEPing:
         
         
 def demo():
-    name = 'jt'
-    timeNow = time.ticks_ms()
-    runningTime = 0
+    name = 0x1234  # 4460 in decimal
+    messageIdentifier = 4321
     ble = bluetooth.BLE()
     led = Pin('LED', Pin.OUT)
-    count = 0
-    messageIdentifier = random.randint(0000,9999)
-    temp = BLEPing(ble, name=name, hopCount=4, mfg=_TELESCOPE_UUID, distance=7.94, messageID= messageIdentifier)
-    while count < 5:
+    temp = BLEPing(ble, name=name, hopCount=4, mfg=_TELESCOPE_UUID, distance=7.94, sender=0x5678, messageID=messageIdentifier)
+    while True:
         temp.blePing()
         led.value(True)
         time.sleep_ms(50)
-        count += 1
-    led.value(False)
-    
+        led.value(False)
+        time.sleep_ms(950)  # Sleep for the rest of the second
 
 if __name__ == "__main__":
     demo()

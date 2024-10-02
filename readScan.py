@@ -18,10 +18,10 @@ _ADV_TYPE_UUID32_MORE = const(0x04)
 _ADV_TYPE_UUID128_MORE = const(0x06)
 _ADV_TYPE_APPEARANCE = const(0x19)
 _ADV_TYPE_MANUFACTURER = const(0xFF)
-_ADV_TYPE_INT = const(0x09)
-_ADV_TYPE_DIST = const(0x06)
-_ADV_TYPE_SENDER = const(0x08)
-_ADV_TYPE_ID = const(0x04)
+_ADV_TYPE_INT = const(0x0A)
+_ADV_TYPE_DIST = const(0x16)
+_ADV_TYPE_SENDER = const(0x17)
+_ADV_TYPE_ID = const(0x18)
 
 class BLENode:
     def __init__(self, ble, target_manufacturer_id=None):
@@ -73,7 +73,7 @@ class BLENode:
                 if type == _ADV_TYPE_MANUFACTURER:
                     result['mfg'] = bluetooth.UUID(int.from_bytes(value[:2], 'little'))
                 elif type == _ADV_TYPE_NAME:
-                    result['name'] = value.decode('utf-8', 'ignore')
+                    result['name'] = int.from_bytes(value, 'big')
                 elif type == _ADV_TYPE_INT:
                     result['hop'] = int.from_bytes(value, 'big') if value else None
                 elif type == _ADV_TYPE_DIST:
@@ -96,14 +96,62 @@ class BLENode:
         self._reset()
         self._scan_callback = callback
         self.advertisement_data = []
-        self._ble.gap_scan(10000, 30000, 30000)  # Scan duration: 10 seconds
+        self._ble.gap_scan(2000, 30000, 30000)  # Scan duration: 10 seconds
+
+class Advertiser:
+    def __init__(self, data):
+        if data and len(data) >= 7:
+            self.mac = data[0]
+            self.mfg = data[1]
+            self.hops = data[2]
+            self.dist = data[3]
+            self.sender = data[4]
+            self.name = data[5]
+            self.messageID = data[6]
+        else:
+            self.mac = self.mfg = self.hops = self.dist = self.sender = self.name = self.messageID = None
+
+    def getHops(self):
+        return self._decode_value(self.hops)
+
+    def getDistance(self):
+        return self._decode_value(self.dist)
+    
+    def getSender(self):
+        return self._decode_value(self.sender)
+    
+    def getMessageID(self):
+        return self._decode_value(self.messageID)
+
+    def getName(self):
+        return self._decode_value(self.name)
+
+    def _decode_value(self, value):
+        if isinstance(value, (int, float)):
+            return value
+        elif isinstance(value, str):
+            try:
+                return int(value, 16)  # Try to decode as hex
+            except ValueError:
+                try:
+                    return int(value)  # Try to decode as decimal
+                except ValueError:
+                    return value  # Return as is if it can't be converted
+        return None
 
 def runScan(ble, central):
     def on_scan(result):
         if result:
             print("Scan complete. Found devices:")
             for device in result:
-                print(device)
+                advertiser = Advertiser(device)
+                print(f"MAC: {advertiser.mac}")
+                print(f"MFG: {advertiser.mfg}")
+                print(f"Hops: {advertiser.getHops()}") 
+                print(f"Distance: {advertiser.getDistance()}")
+                print(f"Sender: {advertiser.getSender()}")
+                print(f"Name: {advertiser.getName()}")
+                print(f"MessageID: {advertiser.getMessageID()}")
         else:
             print("No devices found.")
 

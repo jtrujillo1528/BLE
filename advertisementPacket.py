@@ -16,19 +16,14 @@ import random
 #   N bytes type-specific data
 
 _ADV_TYPE_FLAGS = const(0x01)
-_ADV_TYPE_NAME = const(0x02)
-_ADV_TYPE_SENDER = const(0x08)
+_ADV_TYPE_NAME = const(0x09)
 _ADV_TYPE_UUID16_COMPLETE = const(0x3)
 _ADV_TYPE_UUID32_COMPLETE = const(0x5)
 _ADV_TYPE_UUID128_COMPLETE = const(0x7)
-_ADV_TYPE_INT = const(0x9)
-_ADV_TYPE_ID = const(0x4)
-_ADV_TYPE_DIST = const(0x6)
-'''
-_ADV_TYPE_UUID16_MORE = const(0x2)
-_ADV_TYPE_UUID32_MORE = const(0x4)
-_ADV_TYPE_UUID128_MORE = const(0x6)
-_ADV_TYPE_APPEARANCE = const(0x19)'''
+_ADV_TYPE_INT = const(0x0A)  # Changed from 0x09 to avoid conflict with name
+_ADV_TYPE_DIST = const(0x16)  # Changed from 0x06 to a custom type
+_ADV_TYPE_SENDER = const(0x17)  # Changed from 0x08 to a custom type
+_ADV_TYPE_ID = const(0x18)  # Changed from 0x04 to a custom type
 _ADV_TYPE_MANUFACTURER = const(0xFF)
 
 
@@ -39,7 +34,14 @@ def advertising_payload(name=None, services=None, manufacturer_data=None, hopCou
     def _append(adv_type, value):
         nonlocal payload
         if isinstance(value, int):
-            data = struct.pack("B", value)
+            if adv_type == _ADV_TYPE_NAME:
+                data = struct.pack(">H", value)  # 2 bytes for name
+            elif adv_type == _ADV_TYPE_SENDER:
+                data = struct.pack(">H", value)  # 2 bytes for sender
+            elif adv_type == _ADV_TYPE_ID:
+                data = struct.pack(">H", value)  # 2 bytes for message ID
+            else:
+                data = struct.pack("B", value)
         elif isinstance(value, float):
             data = struct.pack("f", value)
         elif isinstance(value, str):
@@ -61,7 +63,7 @@ def advertising_payload(name=None, services=None, manufacturer_data=None, hopCou
             elif len(b) == 16:
                 _append(_ADV_TYPE_UUID128_COMPLETE, b)
 
-    if name:
+    if name is not None:
         _append(_ADV_TYPE_NAME, name)
    
     _append(_ADV_TYPE_INT, hopCount)
@@ -69,7 +71,7 @@ def advertising_payload(name=None, services=None, manufacturer_data=None, hopCou
     if distance is not None:
         _append(_ADV_TYPE_DIST, distance)
 
-    if sender:
+    if sender is not None:
         _append(_ADV_TYPE_SENDER, sender)
 
     _append(_ADV_TYPE_ID, messageID)

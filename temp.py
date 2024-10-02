@@ -79,9 +79,9 @@ def broadcast(hopCount, distance, sender, messageID, ble):
 async def main():
     print('broadcasting')
     while True:
-        messageIdentifier = random.randint(0000,9999)
+        #messageIdentifier = random.randint(0000,9999)
         ble = bluetooth.BLE()
-        broadcast(hopCount=1, distance=7.94, sender=0x5678, messageID= messageIdentifier, ble=ble)
+        broadcast(hopCount=1, distance=7.94, sender=0x5678, messageID= 4321, ble=ble)
         await asyncio.sleep(1)
         
 asyncio.run(main())
