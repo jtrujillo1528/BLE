@@ -35,6 +35,7 @@ class BLENode:
         self._led = Pin('LED', Pin.OUT)
         self.advertisement_data = []
         self.target_manufacturer_id = target_manufacturer_id
+        self.message_ledger = []  # New: Add message ledger
 
     def _reset(self):
         self._name = None
@@ -48,9 +49,17 @@ class BLENode:
             try:
                 decoded_data = self._decode_adv_data(adv_data)
                 if decoded_data:
-                    mfg_id = decoded_data[0]
-                    if mfg_id == self.target_manufacturer_id:
+                    mfg_id, hop_count, _, _, _, message_id = decoded_data
+                    # Check if it's the target device, hop count > 0, and message not in ledger
+                    if (mfg_id == self.target_manufacturer_id and 
+                        hop_count > 0 and 
+                        message_id not in self.message_ledger):
                         self.advertisement_data.append((ubinascii.hexlify(addr).decode(),) + decoded_data)
+                        # Add message to ledger
+                        self.message_ledger.append(message_id)
+                        # Keep ledger size limited
+                        if len(self.message_ledger) > 10:
+                            self.message_ledger.pop(0)
             except Exception as e:
                 print(f"Error decoding advertisement data: {e}")
         elif event == _IRQ_SCAN_DONE:
