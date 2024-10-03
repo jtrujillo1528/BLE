@@ -24,7 +24,7 @@ _ADV_TYPE_SENDER = const(0x17)
 _ADV_TYPE_ID = const(0x18)
 
 class BLENode:
-    def __init__(self, ble, target_manufacturer_id=None):
+    def __init__(self, ble, target_manufacturer_id=None, ledger=[]):
         if target_manufacturer_id is not None and not isinstance(target_manufacturer_id, bluetooth.UUID):
             raise ValueError("target_manufacturer_id must be a bluetooth.UUID object or None")
         
@@ -35,7 +35,7 @@ class BLENode:
         self._led = Pin('LED', Pin.OUT)
         self.advertisement_data = []
         self.target_manufacturer_id = target_manufacturer_id
-        self.message_ledger = []  # New: Add message ledger
+        self.message_ledger = ledger  # New: Add message ledger
 
     def _reset(self):
         self._name = None
@@ -179,7 +179,7 @@ def runScan(ble, central):
     if not scan_complete:
         print("Scan timed out")
     
-    return central.advertisement_data
+    return central.advertisement_data, central.message_ledger
 
 if __name__ == "__main__":
     ble = bluetooth.BLE()

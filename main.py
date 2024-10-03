@@ -38,7 +38,7 @@ class Advertiser:
         return self.messageID
 
 async def read(ble, deviceType):
-    scanData = readScan.runScan(ble, deviceType)
+    scanData, ledger = readScan.runScan(ble, deviceType)
     print("Scan Data:", scanData)
     output = []
     for data in scanData:
@@ -50,7 +50,7 @@ async def read(ble, deviceType):
             'sender': accessedData.getSender(),
             'messageID': accessedData.getMessageID()
         })
-    return output
+    return output, ledger
 
 def respond(name, hopCount, distance, sender, messageID, ble):
     led = Pin('LED', Pin.OUT)
@@ -59,21 +59,25 @@ def respond(name, hopCount, distance, sender, messageID, ble):
     hopCount -= 1
     message_forward = bleBroadcast.BLEPing(ble, name=name, hopCount=hopCount, mfg=_TELESCOPE_UUID, distance=distance, sender=sender, messageID=messageID)
     message_forward.blePing()
-    time.sleep_ms(1)
+    time.sleep(0.001)
         
     led.value(False)
 
+async def read_and_respond(ledger):
+    ble = bluetooth.BLE()
+    node = readScan.BLENode(ble, _TELESCOPE_UUID, ledger)
+    result, ledger = await read(ble, node)
+    if result:
+        for device in result:
+            # Process the message
+            respond(name=device['name'], hopCount=device['hops'], distance=device['distance'], sender=device['sender'], messageID=device['messageID'], ble=ble)
+    await asyncio.sleep(0.05)
+    return ledger
+
 async def main():
-    print('scanning...')
+    ledger = []
+    print("scanning...")
     while True:
-        print('...')
-        ble = bluetooth.BLE()
-        node = readScan.BLENode(ble, _TELESCOPE_UUID)
-        result = await read(ble, node)
-        if result:
-            for device in result:
-                # Process the message
-                respond(name=device['name'], hopCount=device['hops'], distance=device['distance'], sender=device['sender'], messageID=device['messageID'], ble=ble)
-        await asyncio.sleep(0.05)
+        ledger = await read_and_respond(ledger)
 
 asyncio.run(main())
