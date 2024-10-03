@@ -12,6 +12,9 @@ import asyncio
 _TELESCOPE_UUID = bluetooth.UUID(0x0102)
 deviceName = 0x1234
 
+# Add a simple ledger to keep track of processed messages
+message_ledger = []
+
 class Advertiser:
     def __init__(self, data):
         self.mac = data[0]
@@ -57,7 +60,6 @@ def respond(name, hopCount, distance, sender, messageID, ble):
     led.value(True)
 
     if hopCount > 0:
-
         hopCount -= 1
         message_forward = bleBroadcast.BLEPing(ble, name=name, hopCount=hopCount, mfg=_TELESCOPE_UUID, distance=distance, sender=sender, messageID=messageID)
         message_forward.blePing()
@@ -74,7 +76,20 @@ async def main():
         result = await read(ble, node)
         if result:
             for device in result:
-                respond(name=device['name'],hopCount=device['hops'], distance=device['distance'], sender=device['sender'], messageID=device['messageID'], ble=ble)
+                # Check if we've already processed this message
+                message_key = device['messageID']
+                if message_key not in message_ledger:
+                    # Process the message
+                    respond(name=device['name'], hopCount=device['hops'], distance=device['distance'], sender=device['sender'], messageID=device['messageID'], ble=ble)
+                    
+                    # Add the message to the ledger
+                    message_ledger.append(message_key)
+                    
+                    if len(message_ledger) > 10:
+                        message_ledger.pop(0)
+                        print("ledger shortened")
+                else:
+                    print(f"Skipping already processed message: {message_key}")
         await asyncio.sleep(0.05)
 
 asyncio.run(main())
