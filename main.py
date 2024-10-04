@@ -39,7 +39,7 @@ class Advertiser:
 
 async def read(ble, deviceType):
     scanData, ledger = readScan.runScan(ble, deviceType)
-    print("Scan Data:", scanData)
+    #print("Scan Data:", scanData)
     output = []
     for data in scanData:
         accessedData = Advertiser(data)

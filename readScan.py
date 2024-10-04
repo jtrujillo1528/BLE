@@ -60,10 +60,12 @@ class BLENode:
                         # Keep ledger size limited
                         if len(self.message_ledger) > 10:
                             self.message_ledger.pop(0)
+                        self._ble.gap_scan(None)
+                        event = _IRQ_SCAN_DONE
             except Exception as e:
                 print(f"Error decoding advertisement data: {e}")
-        elif event == _IRQ_SCAN_DONE:
-            print("Scan complete")
+        if event == _IRQ_SCAN_DONE:
+            #print("Scan complete")
             if self._scan_callback:
                 if self.advertisement_data:
                     self._scan_callback(self.advertisement_data)
@@ -154,7 +156,7 @@ def runScan(ble, central):
     
     def on_scan(result):
         nonlocal scan_complete
-        if result:
+        '''if result:
             print("Scan complete. Found devices:")
             for device in result:
                 advertiser = Advertiser(device)
@@ -166,7 +168,7 @@ def runScan(ble, central):
                 print(f"Name: {advertiser.getName()}")
                 print(f"MessageID: {advertiser.getMessageID()}")
         else:
-            print("No devices found.")
+            print("No devices found.")'''
         scan_complete = True
 
     central.scan(callback=on_scan)
