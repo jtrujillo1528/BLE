@@ -89,9 +89,11 @@ async def init_device(device_type, manufacturer):
         
         # Add a small delay to prevent multiple broadcasts on a single press
         time.sleep_ms(200)
+        return True
     
     # Small delay to prevent tight loop
     time.sleep_ms(10)
+    return False
 
 async def read_and_respond(ledger):
     ble = bluetooth.BLE()
@@ -105,10 +107,13 @@ async def read_and_respond(ledger):
     return ledger
 
 async def main():
-    ledger = []
+    isInit = False
+    while isInit == False:
+        isInit = await init_device(device_type, _TELESCOPE_UUID)
     print("scanning...")
-    while True:
-        ledger = await read_and_respond(ledger)
-        await init_device(device_type, _TELESCOPE_UUID)
+    ledger = []
+    if isInit:
+        while True:
+            ledger = await read_and_respond(ledger)
 
 asyncio.run(main())

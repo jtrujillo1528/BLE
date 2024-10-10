@@ -4,6 +4,7 @@ from machine import Pin
 import bleBroadcast
 import readScan
 import asyncio
+import random
 
 
 _TELESCOPE_UUID = bluetooth.UUID(0x0102)
@@ -69,9 +70,9 @@ def broadcast(name, hopCount, distance, sender, messageID, ble):
 async def main():
     print('broadcasting')
     while True:
-        #messageIdentifier = random.randint(0001,9999)
+        messageIdentifier = random.randint(1,9999)
         ble = bluetooth.BLE()
-        broadcast(name= deviceName, hopCount=1, distance=7.94, sender=0x5678, messageID= 4321, ble=ble)
+        broadcast(name= deviceName, hopCount=1, distance=7.94, sender=0x5678, messageID= messageIdentifier, ble=ble)
         await asyncio.sleep(1)
         
 asyncio.run(main())
