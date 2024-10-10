@@ -22,10 +22,6 @@ _FLAG_READ = const(0x0002)
 _FLAG_NOTIFY = const(0x0010)
 _FLAG_INDICATE = const(0x0020)
 
-deviceID = bluetooth.UUID(ubinascii.hexlify(machine.unique_id()).decode('utf-8'))
-fakeDistance = 23
-transmittingDevice = bluetooth.UUID("36336261-3336-6234-3230-313431366969")
-
 # org.bluetooth.service.environmental_sensing
 _TELESCOPE_UUID = bluetooth.UUID(0x0102)
 
@@ -85,16 +81,55 @@ class BLEPing:
     
     def blePing(self):
         self._advertise()
+
+
+class BLEDeviceInit:
+    def __init__(self, ble, device_type=None, manufacturer=None):
+        self._ble = ble
+        self._ble.active(True)
+        self._ble.irq(self._irq)
+        ((self._handle,),) = self._ble.gatts_register_services((_AUTORANGING_SERVICE,))
+        self._connections = set()
+        self._payload = advertising_payload(
+            device_type=device_type,
+            manufacturer_data=manufacturer,
+        )
+
+    def _irq(self, event, data):
+        # Track connections so we can send notifications.
+        if event == _IRQ_CENTRAL_CONNECT:
+            conn_handle, _, _ = data
+            self._connections.add(conn_handle)
+        elif event == _IRQ_CENTRAL_DISCONNECT:
+            conn_handle, _, _ = data
+            self._connections.remove(conn_handle)
+            # Start advertising again to allow a new connection.
+            self._advertise()
+        elif event == _IRQ_GATTS_INDICATE_DONE:
+            conn_handle, value_handle, status = data
+
+    def _advertise(self, interval_us=500000):
+        self._ble.gap_advertise(interval_us, adv_data=self._payload)
+        print(self._payload)
+    
+    def broadcast(self):
+        self._advertise()
         
         
 def demo():
-    name = 0x1234  # 4460 in decimal
-    messageIdentifier = 4321
     ble = bluetooth.BLE()
     led = Pin('LED', Pin.OUT)
-    temp = BLEPing(ble, name=name, hopCount=4, mfg=_TELESCOPE_UUID, distance=7.94, sender=0x5678, messageID=messageIdentifier)
+    name = 0x1234
+    device_type = 1  # Example device type
+    manufacturer = bluetooth.UUID(0x0102)  # Example manufacturer UUID
+    messageIdentifier = 4321
+    device = BLEDeviceInit(
+        ble,
+        device_type=device_type,
+        manufacturer=manufacturer
+    )
     while True:
-        temp.blePing()
+        device.broadcast()
         led.value(True)
         time.sleep_ms(50)
         led.value(False)

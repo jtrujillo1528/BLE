@@ -1,13 +1,6 @@
 import bluetooth
-import random
-import struct
 import time
-import machine
-import ubinascii
-from advertisementPacket import advertising_payload
-from micropython import const
 from machine import Pin
-import network
 import bleBroadcast
 import readScan
 import asyncio
@@ -19,9 +12,6 @@ deviceName = 0x1234
 class Advertiser:
     def __init__(self, dataList):
         if dataList != []:
-            '''        print(len(dataList))
-            print(type(dataList[0][2]))
-            print(repr(dataList[0][3]))'''
             self.mac = dataList[0][0]
             self.hops = dataList[0][2]
             self.dist = dataList[0][3]
@@ -79,7 +69,7 @@ def broadcast(name, hopCount, distance, sender, messageID, ble):
 async def main():
     print('broadcasting')
     while True:
-        #messageIdentifier = random.randint(0000,9999)
+        #messageIdentifier = random.randint(0001,9999)
         ble = bluetooth.BLE()
         broadcast(name= deviceName, hopCount=1, distance=7.94, sender=0x5678, messageID= 4321, ble=ble)
         await asyncio.sleep(1)

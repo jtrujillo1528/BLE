@@ -25,10 +25,11 @@ _ADV_TYPE_DIST = const(0x16)  # Changed from 0x06 to a custom type
 _ADV_TYPE_SENDER = const(0x17)  # Changed from 0x08 to a custom type
 _ADV_TYPE_ID = const(0x18)  # Changed from 0x04 to a custom type
 _ADV_TYPE_MANUFACTURER = const(0xFF)
+_ADV_TYPE_DEVICE_TYPE = const(0x19)
 
 
 # Generate a payload to be passed to gap_advertise(adv_data=...).
-def advertising_payload(name=None, services=None, manufacturer_data=None, hopCount=0, distance=None, sender=None, messageID=0):
+def advertising_payload(name=None, services=None, manufacturer_data=None, hopCount= 0, distance=None, sender=None, messageID=0, device_type=None):
     payload = bytearray()
    
     def _append(adv_type, value):
@@ -40,6 +41,8 @@ def advertising_payload(name=None, services=None, manufacturer_data=None, hopCou
                 data = struct.pack(">H", value)  # 2 bytes for sender
             elif adv_type == _ADV_TYPE_ID:
                 data = struct.pack(">H", value)  # 2 bytes for message ID
+            elif adv_type == _ADV_TYPE_DEVICE_TYPE:
+                data = struct.pack("B", value)  # 1 byte for device type
             else:
                 data = struct.pack("B", value)
         elif isinstance(value, float):
@@ -65,8 +68,9 @@ def advertising_payload(name=None, services=None, manufacturer_data=None, hopCou
 
     if name is not None:
         _append(_ADV_TYPE_NAME, name)
-   
-    _append(_ADV_TYPE_INT, hopCount)
+
+    if hopCount != 0:
+        _append(_ADV_TYPE_INT, hopCount)
   
     if distance is not None:
         _append(_ADV_TYPE_DIST, distance)
@@ -74,9 +78,14 @@ def advertising_payload(name=None, services=None, manufacturer_data=None, hopCou
     if sender is not None:
         _append(_ADV_TYPE_SENDER, sender)
 
-    _append(_ADV_TYPE_ID, messageID)
+    if messageID != 0:
+        _append(_ADV_TYPE_ID, messageID)
+
+    if device_type is not None:
+        _append(_ADV_TYPE_DEVICE_TYPE, device_type)
 
     return payload
+
 
 def decode_field(payload, adv_type):
     i = 0
