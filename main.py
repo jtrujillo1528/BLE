@@ -55,7 +55,6 @@ async def read(ble, deviceType):
     return output, ledger
 
 def respond(name, hopCount, distance, sender, messageID, ble):
-    led = Pin('LED', Pin.OUT)
     led.value(True)
 
     hopCount -= 1
@@ -95,6 +94,7 @@ async def read_and_respond(ledger):
         for device in result:
             # Process the message
             respond(name=device['name'], hopCount=device['hops'], distance=device['distance'], sender=device['sender'], messageID=device['messageID'], ble=ble)
+            #device is stuck transmitting message, fix this
     await asyncio.sleep(0.05)
     return ledger
 

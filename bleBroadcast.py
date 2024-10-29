@@ -66,9 +66,12 @@ class BLEPing:
         elif event == _IRQ_GATTS_INDICATE_DONE:
             conn_handle, value_handle, status = data
 
-    def _advertise(self, interval_us=500000):
+    def _advertise(self, interval_us=100000):
         self._ble.gap_advertise(interval_us, adv_data=self._payload)
         print(self._payload)
+        time.sleep(1)
+        self._ble.gap_advertise(None)
+        print('broadcast stopped')
     
     def blePing(self):
         self._advertise()
@@ -99,9 +102,10 @@ class BLEDeviceInit:
         elif event == _IRQ_GATTS_INDICATE_DONE:
             conn_handle, value_handle, status = data
 
-    def _advertise(self, interval_us=500000):
+    def _advertise(self, interval_us=1000):
         self._ble.gap_advertise(interval_us, adv_data=self._payload)
         print(self._payload)
+        self._ble.gap_advertise(None)
     
     def broadcast(self):
         self._advertise()

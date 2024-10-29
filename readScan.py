@@ -108,7 +108,7 @@ class BLENode:
         self._reset()
         self._scan_callback = callback
         self.advertisement_data = []
-        self._ble.gap_scan(2000, 30000, 30000)  # Scan duration: 10 seconds
+        self._ble.gap_scan(500, 10000, 9000)  # Scan duration: 10 seconds
 
 class Advertiser:
     def __init__(self, data):
@@ -156,8 +156,8 @@ def runScan(ble, central):
     
     def on_scan(result):
         nonlocal scan_complete
-        '''if result:
-            print("Scan complete. Found devices:")
+        if result:
+            '''            print("Scan complete. Found devices:")
             for device in result:
                 advertiser = Advertiser(device)
                 print(f"MAC: {advertiser.mac}")
@@ -175,8 +175,8 @@ def runScan(ble, central):
     
     # Wait for scan to complete or timeout after 10 seconds
     start_time = time.ticks_ms()
-    while not scan_complete and time.ticks_diff(time.ticks_ms(), start_time) < 10000:
-        time.sleep_ms(100)
+    while not scan_complete and time.ticks_diff(time.ticks_ms(), start_time) < 100000:
+        time.sleep_ms(10)
     
     if not scan_complete:
         print("Scan timed out")
@@ -190,4 +190,4 @@ if __name__ == "__main__":
     while True:
         print("\nStarting new scan cycle...")
         runScan(ble, central)
-        time.sleep_ms(5000)
+        time.sleep_ms(5)
